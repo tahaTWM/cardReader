@@ -1,21 +1,7 @@
-/// Turns raw OCR text (from the card photo) into structured card details.
-///
-/// This uses simple, well-commented heuristics — pattern matching plus the
-/// Luhn checksum — rather than any paid/cloud service, so it works fully
-/// offline and free of charge. It won't be 100% perfect on every card design,
-/// but it works well on most plastic cards with embossed/printed digits.
 class CardParser {
-  /// Looks for a run of 13-19 digits (allowing spaces/dashes between them,
-  /// the way card numbers are usually printed) and returns the cleaned
-  /// digits-only string, preferring a 16-digit match that passes the Luhn
-  /// checksum used by real card numbers.
-
   static List<String> cards = [];
+  static bool isUnlocked = false;
 
-  /// Looks for a standalone number with no spaces or dashes inside it,
-  /// 8 to 13 digits long — e.g. a separate "account number" some banks
-  /// print on the front or back of a card, distinct from the 16-digit card
-  /// number. Returns null if no such number is found.
   static String? extractAccountNumber(String text) {
     final matches = RegExp(r'\b\d{8,13}\b').allMatches(text);
 
@@ -55,7 +41,6 @@ class CardParser {
     return candidates.first;
   }
 
-  /// Formats a digits-only string into groups of 4, e.g. "4111 1111 1111 1111".
   static String formatCardNumber(String digits) {
     final buffer = StringBuffer();
     for (var i = 0; i < digits.length; i++) {
@@ -65,17 +50,12 @@ class CardParser {
     return buffer.toString();
   }
 
-  /// Looks for an MM/YY (or MM YY) pattern, the standard expiry format.
   static String? extractExpiryDate(String text) {
     final match = RegExp(r'(0[1-9]|1[0-2])\s?/\s?(\d{2})\b').firstMatch(text);
     if (match == null) return null;
     return '${match.group(1)}/${match.group(2)}';
   }
 
-  /// Best-effort guess at the cardholder name: the longest all-letter line
-  /// that isn't a digit, isn't the issuer/network name, and isn't a known
-  /// label like "VALID THRU". This is a heuristic and may occasionally miss
-  /// or misfire — it's meant as a convenience, not a guarantee.
   static String? extractCardHolderName(String text) {
     const blacklist = [
       'VISA',

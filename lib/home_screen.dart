@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                   icon: const Icon(Icons.camera_alt),
                   label: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Scan Qi card'),
+                    child: Text('QiCard/ 16 digit with Spaces'),
                   ),
                 ),
               ),
@@ -58,7 +58,7 @@ class HomeScreen extends StatelessWidget {
                   icon: const Icon(Icons.camera_alt),
                   label: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Scan MC/Co-badge card'),
+                    child: Text('MC&Co-badge/ 8-13 digit without Spaces'),
                   ),
                 ),
               ),

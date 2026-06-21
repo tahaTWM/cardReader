@@ -7,6 +7,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:permission_handler/permission_handler.dart';
 
 import 'card_parser.dart';
+import 'lockAuth.dart';
 import 'result_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -191,18 +192,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
     required String imagePath,
   }) async {
     if (!mounted) return;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ResultScreen(
-          cardNumber: cardNumber.toString(),
-          expiryDate: expiry,
-          cardHolderName: name,
-          imagePath: imagePath,
-          cardType: widget.cardType,
-        ),
-      ),
+          builder: (_) => LockScreen(
+                  child: ResultScreen(
+                cardNumber: cardNumber.toString(),
+                expiryDate: expiry,
+                cardHolderName: name,
+                imagePath: imagePath,
+                cardType: widget.cardType,
+              ))),
     );
+
+    // await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => ResultScreen(
+    //       cardNumber: cardNumber.toString(),
+    //       expiryDate: expiry,
+    //       cardHolderName: name,
+    //       imagePath: imagePath,
+    //       cardType: widget.cardType,
+    //     ),
+    //   ),
+    // );
 
     if (mounted) {
       setState(() => _isProcessing = false);
