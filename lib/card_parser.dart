@@ -16,7 +16,46 @@ class CardParser {
     return candidates.first;
   }
 
+  // Luhn algorithm — validates the checksum of a card number
+  static bool _passesLuhn(String digits) {
+    int sum = 0;
+    bool alternate = false;
+    for (int i = digits.length - 1; i >= 0; i--) {
+      int n = int.parse(digits[i]);
+      if (alternate) {
+        n *= 2;
+        if (n > 9) n -= 9;
+      }
+      sum += n;
+      alternate = !alternate;
+    }
+    return sum % 10 == 0;
+  }
+
   static String? extractCardNumber(String text) {
+    final matches = RegExp(r'(?<!\d)\d[\d \-]{11,21}\d(?!\d)').allMatches(text);
+    final candidates = matches
+        .map((m) => m.group(0)!.replaceAll(RegExp(r'[^0-9]'), ''))
+        .where((d) => d.length >= 13 && d.length <= 19)
+        .toSet()
+        .toList();
+    if (candidates.isEmpty) return null;
+
+    candidates.sort((a, b) {
+      int score(String d) {
+        var s = 0;
+        if (d.length != 16) s += 1; // prefer 16 digits
+        if (!_passesLuhn(d)) s += 2; // prefer valid checksum
+        return s;
+      }
+
+      return score(a).compareTo(score(b));
+    });
+    return candidates.first;
+  }
+
+
+  static String? extractCardNumberOLD(String text) {
     final matches = RegExp(r'(?:\d[ -]?){13,19}').allMatches(text);
 
     final candidates = matches
@@ -95,7 +134,7 @@ class CardParser {
     return best;
   }
 
-  static bool _passesLuhn(String number) {
+  static bool _passesLuhnOLD(String number) {
     var sum = 0;
     var alternate = false;
     for (var i = number.length - 1; i >= 0; i--) {

@@ -31,7 +31,6 @@ class _LockScreenState extends State<LockScreen> {
   void initState() {
     super.initState();
     // Try to unlock automatically as soon as this screen opens.
-    print(CardParser.isUnlocked.toString() + '---');
     if (!CardParser.isUnlocked) _authenticate();
   }
 

@@ -62,6 +62,24 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ScannerScreen(
+                              cardType: 3,
+                            )),
+                  ),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Text('Scan NID'),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

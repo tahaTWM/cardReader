@@ -1,12 +1,21 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
+
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
+import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart'
+    show FlutterTesseractOcr;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'card_parser.dart';
+import 'iraqData.dart';
 import 'lockAuth.dart';
 import 'result_screen.dart';
 
@@ -63,7 +72,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         _controller = controller;
         _isReady = true;
       });
-      _autoCapture();
+      if (widget.cardType != 3) _autoCapture();
     } catch (e) {
       setState(() => _error = 'Could not start the camera: $e');
     }
@@ -124,6 +133,94 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
+  Future<void> _captureAndScanNID() async {
+    final controller = _controller;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _isProcessing) {
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final XFile picture = await controller.takePicture();
+
+      final String result = await extractArabicText(picture.path);
+
+      final Map<String, String?> data = IraqiIdExtractor.extract(result);
+      print('$data----');
+      debugPrint('رقم الهوية: ${data['idNumber']}');
+      debugPrint('الاسم: ${data['name']}');
+      debugPrint('تاريخ الميلاد: ${data['dob']}');
+      debugPrint('المحافظة: ${data['governorate']}');
+      debugPrint('النص المنظف: ${data['cleaned']}');
+      print('-----');
+    } catch (e) {
+      debugPrint('-----' + e.toString() + '----');
+    }
+  }
+
+  Future<String> extractArabicText(String imagePath) async {
+    // ١. قراءة الصورة
+    final File imageFile = File(imagePath);
+    final Uint8List bytes = await imageFile.readAsBytes();
+
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) return '';
+
+    // ٢. تكبير الصورة (مهم جداً لـ Tesseract)
+    image = img.copyResize(
+      image,
+      width: image.width * 2,
+      height: image.height * 2,
+      interpolation: img.Interpolation.cubic,
+    );
+
+    // ٣. تحويل لـ Grayscale
+    image = img.grayscale(image);
+
+    // ٤. زيادة التباين
+    image = img.adjustColor(
+      image,
+      contrast: 1.5,
+      brightness: 1.1,
+    );
+
+    // ٥. Sharpen لتوضيح الحروف
+    image = img.convolution(image, filter: [
+      0,
+      -1,
+      0,
+      -1,
+      5,
+      -1,
+      0,
+      -1,
+      0,
+    ]);
+
+    // ٦. حفظ الصورة المعالجة مؤقتاً
+    final String processedPath = imagePath.replaceAll('.jpg', '_processed.jpg');
+    await File(processedPath).writeAsBytes(img.encodeJpg(image, quality: 100));
+
+    // ٧. OCR على الصورة المعالجة
+    final String result = await FlutterTesseractOcr.extractText(
+      processedPath,
+      language: 'ara',
+      args: {
+        "preserve_interword_spaces": "1",
+        "psm": "6", // نص منظم متعدد الأسطر
+        "oem": "1", // LSTM engine (أدق)
+      },
+    );
+
+    // حذف الملف المؤقت
+    await File(processedPath).delete();
+
+    return result.trim();
+  }
+
   /// Starts watching for a card in the background: every 1.2 seconds it
   /// silently takes a photo and runs OCR on it. The instant a valid card
   /// number is found, it stops and opens the result screen automatically —
@@ -139,13 +236,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Future<void> _autoCaptureTick() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return;
-    if (_isProcessing)
+    if (_isProcessing) {
       return; // previous tick (or a manual capture) is still busy
+    }
 
     setState(() => _isProcessing = true);
 
     try {
       final XFile picture = await controller.takePicture();
+
       final RecognizedText result = await _textRecognizer
           .processImage(InputImage.fromFilePath(picture.path));
       final account = CardParser.extractAccountNumber(result.text);
@@ -284,7 +383,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                             ? const CircularProgressIndicator(
                                 color: Colors.white)
                             : FloatingActionButton.large(
-                                onPressed: _captureAndScan,
+                                onPressed: _captureAndScanNID,
                                 backgroundColor: Colors.white,
                                 child: const Icon(Icons.camera_alt,
                                     color: Colors.black),
