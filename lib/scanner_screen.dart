@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
