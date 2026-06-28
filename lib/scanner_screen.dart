@@ -1,19 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:blinkid_flutter/blinkid_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
-import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart'
-    show FlutterTesseractOcr;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import 'card_parser.dart';
-import 'iraqData.dart';
 import 'lockAuth.dart';
 import 'result_screen.dart';
 
@@ -144,79 +138,43 @@ class _ScannerScreenState extends State<ScannerScreen> {
     try {
       final XFile picture = await controller.takePicture();
 
-      final String result = await extractArabicText(picture.path);
+      final result = await BlinkidFlutter().performScan(
+        BlinkIdSdkSettings(
+            "sRwCAA9jb20uZXhhbXBsZS52aW4AbGV5SkRjbVZoZEdWa1QyNGlPakUzT0RJMk5EZzBOVFl3TXpRc0lrTnlaV0YwWldSR2IzSWlPaUpsT0RKaU9HTTFNeTFsWlRWakxUUmpOekl0WVRkbE1DMDRNVGxqTXpBeE5EWmpNemdpZlE9PdbWQdPsuZhwMwpOuu44kBUHIKEdfafZUdb9JDs1i2YywUHbc1KFzKkcP3W/rWqHbMLT5rI4eiaBTK4A3pYPn63q6JQmjhNmU9D2iIx8mTScYUvIaXMtbJP1UjlDMg=="),
+        BlinkIdSessionSettings(),
+      );
+      print("result: ${result}");
 
-      final Map<String, String?> data = IraqiIdExtractor.extract(result);
-      print('$data----');
-      debugPrint('رقم الهوية: ${data['idNumber']}');
-      debugPrint('الاسم: ${data['name']}');
-      debugPrint('تاريخ الميلاد: ${data['dob']}');
-      debugPrint('المحافظة: ${data['governorate']}');
-      debugPrint('النص المنظف: ${data['cleaned']}');
-      print('-----');
+      // var idRecognizer = BlinkIdSingleSideRecognizer();
+      // idRecognizer.returnFullDocumentImage = true;
+      // idRecognizer.returnFaceImage = true;
+
+      // var collection = RecognizerCollection([idRecognizer]);
+
+      // var result = await MicroblinkScanner.scanWithCamera(
+      //   collection,
+      //   OverlaySettings(OverlaySettingsType.Document),
+      //   'sRwCAA9jb20uZXhhbXBsZS52aW4AbGV5SkRjbVZoZEdWa1QyNGlPakUzT0RJMk5EZzBOVFl3TXpRc0lrTnlaV0YwWldSR2IzSWlPaUpsT0RKaU9HTTFNeTFsWlRWakxUUmpOekl0WVRkbE1DMDRNVGxqTXpBeE5EWmpNemdpZlE9PdbWQdPsuZhwMwpOuu44kBUHIKEdfafZUdb9JDs1i2YywUHbc1KFzKkcP3W/rWqHbMLT5rI4eiaBTK4A3pYPn63q6JQmjhNmU9D2iIx8mTScYUvIaXMtbJP1UjlDMg==', // ← المفتاح من developer.microblink.com
+      // );
+
+      // if (result.isEmpty) return;
+
+      // var idResult = idRecognizer.result;
+
+      // if (idResult.resultState == RecognizerResultState.valid) {
+      //   debugPrint('الاسم الأول: ${idResult.firstName?.value}');
+      //   debugPrint('اسم الأب: ${idResult.fathersName?.value}');
+      //   debugPrint('الاسم الأخير: ${idResult.lastName?.value}');
+      //   debugPrint('تاريخ الميلاد: ${idResult.dateOfBirth?.date}');
+      //   debugPrint('رقم الوثيقة: ${idResult.documentNumber?.value}');
+      //   debugPrint('الجنسية: ${idResult.nationality?.value}');
+      //   debugPrint('الجنس: ${idResult.sex?.value}');
+      //   debugPrint('تاريخ الانتهاء: ${idResult.dateOfExpiry?.date}');
+      // }
     } catch (e) {
       debugPrint('-----' + e.toString() + '----');
+      Navigator.pop(context);
     }
-  }
-
-  Future<String> extractArabicText(String imagePath) async {
-    // ١. قراءة الصورة
-    final File imageFile = File(imagePath);
-    final Uint8List bytes = await imageFile.readAsBytes();
-
-    img.Image? image = img.decodeImage(bytes);
-    if (image == null) return '';
-
-    // ٢. تكبير الصورة (مهم جداً لـ Tesseract)
-    image = img.copyResize(
-      image,
-      width: image.width * 2,
-      height: image.height * 2,
-      interpolation: img.Interpolation.cubic,
-    );
-
-    // ٣. تحويل لـ Grayscale
-    image = img.grayscale(image);
-
-    // ٤. زيادة التباين
-    image = img.adjustColor(
-      image,
-      contrast: 1.5,
-      brightness: 1.1,
-    );
-
-    // ٥. Sharpen لتوضيح الحروف
-    image = img.convolution(image, filter: [
-      0,
-      -1,
-      0,
-      -1,
-      5,
-      -1,
-      0,
-      -1,
-      0,
-    ]);
-
-    // ٦. حفظ الصورة المعالجة مؤقتاً
-    final String processedPath = imagePath.replaceAll('.jpg', '_processed.jpg');
-    await File(processedPath).writeAsBytes(img.encodeJpg(image, quality: 100));
-
-    // ٧. OCR على الصورة المعالجة
-    final String result = await FlutterTesseractOcr.extractText(
-      processedPath,
-      language: 'ara',
-      args: {
-        "preserve_interword_spaces": "1",
-        "psm": "6", // نص منظم متعدد الأسطر
-        "oem": "1", // LSTM engine (أدق)
-      },
-    );
-
-    // حذف الملف المؤقت
-    await File(processedPath).delete();
-
-    return result.trim();
   }
 
   /// Starts watching for a card in the background: every 1.2 seconds it

@@ -15,7 +15,6 @@ class CardParser {
 
     return candidates.first;
   }
-
   // Luhn algorithm — validates the checksum of a card number
   static bool _passesLuhn(String digits) {
     int sum = 0;
@@ -53,7 +52,6 @@ class CardParser {
     });
     return candidates.first;
   }
-
 
   static String? extractCardNumberOLD(String text) {
     final matches = RegExp(r'(?:\d[ -]?){13,19}').allMatches(text);

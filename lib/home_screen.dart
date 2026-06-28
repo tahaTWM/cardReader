@@ -21,8 +21,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Point your camera at a card to read its number, '
-                'expiry date and holder name.',
+                'Point your camera at a card/account to read its number',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey),
               ),
