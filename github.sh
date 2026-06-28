@@ -18,7 +18,7 @@ fi
 # Commit message
 read -p "Enter Commit Message: " msg
 TM=$(date +"%Y-%m-%d, %T")
-git commit -m "${msg} - ${TM}"
+git commit -m "${TM} ${msg} "
  
 # Branch selection, with a clear default and basic validation
 read -p "Push to main or uat? [main/uat]: " branch
