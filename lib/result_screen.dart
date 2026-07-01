@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'card_parser.dart';
 import 'home_screen.dart';
 
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:csv/csv.dart';

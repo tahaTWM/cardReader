@@ -16,6 +16,7 @@ analyzer:
     no_logic_in_create_state: ignore
     prefer_interpolation_to_compose_strings: ignore
     strict_top_level_inference: ignore
+    unnecessary_brace_in_string_interps: ignore
     unused_element: ignore
     unused_local_variable: ignore
 include: package:flutter_lints/flutter.yaml

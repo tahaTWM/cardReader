@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:blinkid_flutter/blinkid_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -37,7 +36,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   void initState() {
     super.initState();
-    _setup();
+    widget.cardType == 3 ? _captureAndScanNID() : _setup();
   }
 
   Future<void> _setup() async {
@@ -144,43 +143,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
         BlinkIdSessionSettings(),
       );
       print("result: ${result}");
-
-      // var idRecognizer = BlinkIdSingleSideRecognizer();
-      // idRecognizer.returnFullDocumentImage = true;
-      // idRecognizer.returnFaceImage = true;
-
-      // var collection = RecognizerCollection([idRecognizer]);
-
-      // var result = await MicroblinkScanner.scanWithCamera(
-      //   collection,
-      //   OverlaySettings(OverlaySettingsType.Document),
-      //   'sRwCAA9jb20uZXhhbXBsZS52aW4AbGV5SkRjbVZoZEdWa1QyNGlPakUzT0RJMk5EZzBOVFl3TXpRc0lrTnlaV0YwWldSR2IzSWlPaUpsT0RKaU9HTTFNeTFsWlRWakxUUmpOekl0WVRkbE1DMDRNVGxqTXpBeE5EWmpNemdpZlE9PdbWQdPsuZhwMwpOuu44kBUHIKEdfafZUdb9JDs1i2YywUHbc1KFzKkcP3W/rWqHbMLT5rI4eiaBTK4A3pYPn63q6JQmjhNmU9D2iIx8mTScYUvIaXMtbJP1UjlDMg==', // ← المفتاح من developer.microblink.com
-      // );
-
-      // if (result.isEmpty) return;
-
-      // var idResult = idRecognizer.result;
-
-      // if (idResult.resultState == RecognizerResultState.valid) {
-      //   debugPrint('الاسم الأول: ${idResult.firstName?.value}');
-      //   debugPrint('اسم الأب: ${idResult.fathersName?.value}');
-      //   debugPrint('الاسم الأخير: ${idResult.lastName?.value}');
-      //   debugPrint('تاريخ الميلاد: ${idResult.dateOfBirth?.date}');
-      //   debugPrint('رقم الوثيقة: ${idResult.documentNumber?.value}');
-      //   debugPrint('الجنسية: ${idResult.nationality?.value}');
-      //   debugPrint('الجنس: ${idResult.sex?.value}');
-      //   debugPrint('تاريخ الانتهاء: ${idResult.dateOfExpiry?.date}');
-      // }
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
     } catch (e) {
-      debugPrint('-----' + e.toString() + '----');
-      Navigator.pop(context);
+      debugPrint('----- $e ----');
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
-  /// Starts watching for a card in the background: every 1.2 seconds it
-  /// silently takes a photo and runs OCR on it. The instant a valid card
-  /// number is found, it stops and opens the result screen automatically —
-  /// the person doesn't need to tap anything.
   void _autoCapture() {
     _autoCaptureTimer?.cancel();
     _autoCaptureTimer = Timer.periodic(
